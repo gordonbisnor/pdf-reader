@@ -1,5 +1,4 @@
 # coding: utf-8
-
 class PDF::Reader
 
   # Takes a collection of TextRun objects and renders them into a single
@@ -8,6 +7,9 @@ class PDF::Reader
   # media box should be a 4 number array that describes the dimensions of the
   # page to be rendered as described by the page's MediaBox attribute
   class PageLayout
+    
+    attr_reader :runs
+    
     def initialize(runs, mediabox)
       raise ArgumentError, "a mediabox must be provided" if mediabox.nil?
 
@@ -23,7 +25,7 @@ class PDF::Reader
 
     def to_s
       return "" if @runs.empty?
-
+      
       page = row_count.times.map { |i| " " * col_count }
       @runs.each do |run|
         x_pos = ((run.x - @x_offset) / col_multiplier).round
@@ -32,6 +34,7 @@ class PDF::Reader
           local_string_insert(page[y_pos], run.text, x_pos)
         end
       end
+      
       interesting_rows(page).map(&:rstrip).join("\n")
     end
 
@@ -93,18 +96,58 @@ class PDF::Reader
       }.flatten.sort
     end
 
+    # This method groups characters that are close together. When no more characters
+    # are close, it calls the extract_words_from_characters method that either uses
+    # spaces (if any are present) to determine word boundaries or uses coordinates
+    # if there are no spaces.
     def group_chars_into_runs(chars)
       runs = []
+      buffer = []
+
       while head = chars.shift
+        extract_words_from_characters(runs, buffer) if buffer.count > 0 and buffer.last.x < (head.x - head.font_size * 0.51) # check if not close enough to last character to group with it - i.e. this is the start of a new word. using a multiple of 2.5 is arbitrary
+        buffer << head
+      end
+      
+      # write any remaining buffer
+      extract_words_from_characters(runs, buffer) if buffer.count > 0
+      runs
+    end
+    
+    # This method uses spaces (if any are present) to determine word boundaries or uses coordinates
+    # if there are no spaces. Where spaces are present, there is no need to use separate text runs for
+    # separate words. Doing so could result in incorrect spacing
+    def extract_words_from_characters(runs, buffer)
+      space_exists = buffer.any?{|char| char.text == " "}
+      
+      if space_exists
+        extract_words_from_characters_using_spaces(runs, buffer)
+      else
+        extract_words_from_characters_using_char_positions(runs, buffer)
+      end
+    end
+    
+    # This method should merge the entire buffer together as the spacing has already been set. Using
+    # multiple text runs would result in imputed spacing based on the position of characters that
+    # is likely to be wrong
+    def extract_words_from_characters_using_spaces(runs, buffer)
+      runs << buffer.shift if runs.empty?
+      while char = buffer.shift
+        runs[-1] = TextRun.new(runs.last.x, runs.last.y, char.endx - runs.last.x, runs.last.font_size, runs.last.text + char.text)
+      end
+    end
+    
+    def extract_words_from_characters_using_char_positions(runs, buffer)
+      while char = buffer.shift
         if runs.empty?
-          runs << head
-        elsif runs.last.mergable?(head)
-          runs[-1] = runs.last + head
+          runs << char
+        elsif runs.last.mergable?(char)
+          # The '+' method on the text run class imputes spacing based on co-ordinates
+          runs[-1] = runs.last + char
         else
-          runs << head
+          runs << char
         end
       end
-      runs
     end
 
     # This is a simple alternative to String#[]=. We can't use the string

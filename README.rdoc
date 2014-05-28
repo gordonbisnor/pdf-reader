@@ -1,3 +1,9 @@
+= tdenovan Fork
+
+Forked to change layout rendering to [improve] handling of spaces. In the master, spaces in laying out text are imputed from the mean glyph width. Spaces in the pdf are disregarded.
+
+This fork has regard to spaces present in the pdf. If there are spaces present which can be used to separate words, preference is given to the spacing information in the pdf rather than calculating where spaces should be based on glyph (character) widths. This can be necessary as sometimes text runs contain single characters, and the spacing between these text runs (using x coordinates) is greater than the mean character width but the characters still combine to form words.
+
 = Release Notes
 
 The PDF::Reader library implements a PDF parser conforming as much as possible

@@ -6,15 +6,17 @@ class PDF::Reader
     include Comparable
 
     attr_reader :x, :y, :width, :font_size, :text
+    attr_accessor :estimated_character_spacing
 
     alias :to_s :text
 
-    def initialize(x, y, width, font_size, text)
+    def initialize(x, y, width, font_size, text, estimated_character_spacing = nil)
       @x = x
       @y = y
       @width = width
       @font_size = font_size.floor
       @text = text
+      @estimated_character_spacing = estimated_character_spacing
     end
 
     # Allows collections of TextRun objects to be sorted. They will be sorted
@@ -47,11 +49,12 @@ class PDF::Reader
 
     def +(other)
       raise ArgumentError, "#{other} cannot be merged with this run" unless mergable?(other)
-
-      if (other.x - endx) <( font_size * 0.2)
-        TextRun.new(x, y, other.endx - x, font_size, text + other.text)
+      
+      char_width = @estimated_character_spacing.nil? ? font_size : @estimated_character_spacing * 5
+      if (other.x - endx) <( char_width * 0.2)
+        TextRun.new(x, y, other.endx - x, font_size, text + other.text, @estimated_character_spacing)
       else
-        TextRun.new(x, y, other.endx - x, font_size, "#{text} #{other.text}")
+        TextRun.new(x, y, other.endx - x, font_size, "#{text} #{other.text}", @estimated_character_spacing)
       end
     end
 
@@ -62,7 +65,8 @@ class PDF::Reader
     private
 
     def mergable_range
-      @mergable_range ||= Range.new(endx - 3, endx + font_size)
+      char_width = @estimated_character_spacing.nil? ? font_size : @estimated_character_spacing * 2
+      @mergable_range ||= Range.new(endx - 3.5, endx + char_width)
     end
 
     def character_count

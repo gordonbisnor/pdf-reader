@@ -81,7 +81,7 @@ describe PDF::Reader, "column specs" do
         col2_2   = find_position_of_match(ft, /sunt in culpa qui officia deserunt\s*sum/)
         col2_3   = find_position_of_match(ft, /mollit anim id est laborum. Lo -\s*adipisicing/)
         col2_4   = find_position_of_match(ft, /rem ipsum dolor sit amet, con -\s*tempor/)
-
+        
         col2_1.should_not be_nil
         col2_1.should eql(col2_2)
         col2_1.should eql(col2_3)
