@@ -31,6 +31,14 @@ class PDF::Reader
         @stack         = [DEFAULT_GRAPHICS_STATE.dup]
         state[:ctm]    = identity_matrix
       end
+      
+      # =============
+      # = Text mode =
+      # =============
+      
+      def text_mode
+        state[:text_mode]
+      end
 
       #####################################################
       # Graphics State Operators
