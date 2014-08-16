@@ -34,7 +34,7 @@ class PDF::Reader
   class Font
     attr_accessor :subtype, :encoding, :descendantfonts, :tounicode
     attr_reader :widths, :first_char, :last_char, :basefont, :font_descriptor,
-                :cid_widths, :cid_default_width
+                :cid_widths, :cid_default_width, :is_embedded
 
     def initialize(ohash = nil, obj = nil)
       if ohash.nil? || obj.nil?
@@ -43,6 +43,7 @@ class PDF::Reader
       end
       @ohash = ohash
       @tounicode = nil
+      @is_embedded = false
 
       extract_base_info(obj)
       extract_descriptor(obj)
@@ -80,7 +81,7 @@ class PDF::Reader
       @cached_widths ||= {}
       @cached_widths[code_point] ||= @width_calc.glyph_width(code_point)
     end
-
+    
     private
 
     def default_encoding(font_name)
@@ -144,6 +145,7 @@ class PDF::Reader
         # a CID Font
         fd = @ohash.object(obj[:FontDescriptor])
         @font_descriptor = PDF::Reader::FontDescriptor.new(@ohash, fd)
+        @is_embedded = fd.keys.select{|key| key.to_s.include? "FontFile"}.count > 0
       else
         @font_descriptor = nil
       end

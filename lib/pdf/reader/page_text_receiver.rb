@@ -156,6 +156,9 @@ module PDF
         if @state.current_font.nil?
           raise PDF::Reader::MalformedPDFError, "current font is invalid"
         end
+        
+        # Ignore the string unless this is an embedded font (e.g. has proper text)
+        return unless @state.current_font.is_embedded
                 
         # save this text run to the buffer for the current text object
         newx, newy = @state.trm_transform(0,0)
