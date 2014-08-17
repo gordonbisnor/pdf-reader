@@ -158,7 +158,7 @@ module PDF
         end
         
         # Ignore the string if the font is embedded (e.g. might not be a system font)
-        return if @state.current_font.is_embedded or string =~ /^[\x00-\x7F]*$/
+        return if @state.current_font.is_embedded or !(string =~ /^[\x00-\x7F]*$/)
                 
         # save this text run to the buffer for the current text object
         newx, newy = @state.trm_transform(0,0)
