@@ -160,6 +160,7 @@ class PDF::Reader
       @descendantfonts = descendants.map { |desc|
         PDF::Reader::Font.new(@ohash, @ohash.object(desc))
       }
+      # @descendantfonts.each { |font| @is_embedded = true if font.is_embedded}
     end
 
     def to_utf8_via_cmap(params)

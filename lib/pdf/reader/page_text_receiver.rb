@@ -156,9 +156,6 @@ module PDF
         if @state.current_font.nil?
           raise PDF::Reader::MalformedPDFError, "current font is invalid"
         end
-        
-        # Ignore the string if the font is embedded (e.g. might not be a system font)
-        return if @state.current_font.is_embedded or !(string =~ /^[\x00-\x7F]*$/)
                 
         # save this text run to the buffer for the current text object
         newx, newy = @state.trm_transform(0,0)
@@ -176,7 +173,8 @@ module PDF
           glyph_width = @state.current_font.glyph_width(glyph_code) / 1000.0
           th = 1
           scaled_glyph_width = glyph_width * @state.font_size * th
-          if utf8_chars != SPACE
+          if utf8_chars != SPACE and utf8_chars.force_encoding("UTF-8").ascii_only?
+            # Only save ascii chars
             @characters_buffer << TextRun.new(newx, newy, scaled_glyph_width, @state.font_size, utf8_chars) 
           end
           @state.process_glyph_displacement(glyph_width, 0, utf8_chars == SPACE)
