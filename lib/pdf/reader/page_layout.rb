@@ -49,7 +49,7 @@ class PDF::Reader
     def interesting_rows(rows)
       line_lengths = rows.map { |l| l.strip.length }
       first_line_with_text = line_lengths.index { |l| l > 0 }
-      last_line_with_text  = line_lengths.size - line_lengths.reverse.index { |l| l > 0 }
+      last_line_with_text  = line_lengths.size - line_lengths.reverse.index { |l| l > 0 } rescue line_lengths.size
       interesting_line_count = first_line_with_text ? (last_line_with_text - first_line_with_text) : line_lengths.size
       rows[first_line_with_text, interesting_line_count].map
     end
